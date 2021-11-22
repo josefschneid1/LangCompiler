@@ -3,6 +3,7 @@ add_library(Parser)
 target_sources(Parser
 	PRIVATE
 		src/Parser.cpp
+		include/Parser/Parser.hpp
 )
 
 target_include_directories(Parser

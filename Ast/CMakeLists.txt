@@ -4,6 +4,8 @@ target_sources(Ast
 	PRIVATE
 		src/Ast.cpp
 		src/SymbolTable.cpp
+		include/Ast/Ast.hpp
+		include/Ast/SymbolTable.hpp
 )
 
 target_include_directories(Ast

@@ -69,15 +69,28 @@ namespace intermediate_rep
  
 		Symbol& operator[](const std::string& key);
 
-		template<typename T>
-		requires std::same_as<T,Variable> || std::same_as<T,Function>
-		T& get(const std::string& key);
 
 		Symbol& insert(const std::string& key, Symbol v);
 
 		template<typename T>
-		requires std::same_as<T,Variable> || std::same_as<T,Function>
-		T& insert(const std::string& key, T v);
+			requires std::same_as<T, SymbolTable::Variable> || std::same_as<T, SymbolTable::Function>
+		T & get(const std::string & key)
+		{
+			auto ptr = std::get_if<T>(&(*this)[key]);
+			if (ptr == nullptr)
+			{
+				throw std::runtime_error("");
+			}
+			return *ptr;
+		}
+
+		template<typename T>
+			requires std::same_as<T, SymbolTable::Variable> || std::same_as<T, SymbolTable::Function>
+		T & insert(const std::string & key, T v)
+		{
+			return std::get<T>(insert(key, Symbol{ std::move(v) }));
+		}
+
 
 		SymbolTable& addChild(std::unique_ptr<SymbolTable> child);
 
@@ -134,24 +147,6 @@ namespace intermediate_rep
 		SymbolTableBuilder& builder;
 	};
 
-	template<typename T>
-	requires std::same_as<T,SymbolTable::Variable> || std::same_as<T,SymbolTable::Function>
-	T& SymbolTable::get(const std::string& key)
-	{
-		auto ptr = std::get_if<T>(&(*this)[key]);
-		if(ptr == nullptr)
-		{
-			throw std::runtime_error("");
-		}
-		return *ptr;
-	}
-
-	template<typename T>
-	requires std::same_as<T,SymbolTable::Variable> || std::same_as<T,SymbolTable::Function>
-	T& SymbolTable::insert(const std::string& key, T v)
-	{
-		return std::get<T>(insert(key, Symbol{std::move(v)}));
-	}
-
+	
 }
 #endif

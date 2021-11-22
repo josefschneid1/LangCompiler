@@ -4,6 +4,8 @@ target_sources(AsmGenerator
 	PRIVATE
 		src/AsmGenerator.cpp
 		src/Register.cpp
+		include/AsmGenerator/AsmGenerator.hpp
+		include/AsmGenerator/Register.hpp
 )
 
 target_include_directories(AsmGenerator

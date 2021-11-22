@@ -3,6 +3,7 @@ add_library(TacGenerator)
 target_sources(TacGenerator
 	PRIVATE
 		src/TacGenerator.cpp
+		include/TacGenerator/TacGenerator.hpp
 )
 
 target_include_directories(TacGenerator

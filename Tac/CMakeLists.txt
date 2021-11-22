@@ -3,6 +3,7 @@ add_library(Tac)
 target_sources(Tac
 	PRIVATE
 		src/Tac.cpp
+		include/Tac/Tac.hpp
 )
 
 target_include_directories(Tac

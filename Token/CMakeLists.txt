@@ -3,6 +3,7 @@ add_library(Token)
 target_sources(Token
 	PRIVATE
 		src/Token.cpp
+		include/Token/Token.hpp
 )
 
 target_include_directories(Token

@@ -3,6 +3,7 @@ add_library(Lexer)
 target_sources(Lexer
 	PRIVATE
 		src/Lexer.cpp
+		include/Lexer/Lexer.hpp
 )
 
 target_include_directories(Lexer
