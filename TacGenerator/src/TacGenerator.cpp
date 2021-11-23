@@ -144,7 +144,7 @@ namespace tac_gen
 				{
 					label = stmt.expr->accept(*this, label);
 				}
-				tac.push_back(tac::Quadruple{label, tac::InstructionType::Return,stmt.expr ?
+				tac.push_back(tac::Quadruple{ label, tac::InstructionType::Return,std::monostate{},stmt.expr ?
 					 address: tac::Address{std::monostate{}}});
 
 				return "";
@@ -206,7 +206,7 @@ namespace tac_gen
 				for(auto& arg : call.args)
 				{
 					label = arg->accept(*this, label);
-					tac.push_back({label, tac::InstructionType::Param, address});
+					tac.push_back({ label, tac::InstructionType::Param, std::monostate{}, address });
 				}
 				auto varPtr = newTemp(call.sym_entry->returnType);
 				address = varPtr;

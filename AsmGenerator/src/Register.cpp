@@ -18,8 +18,18 @@ namespace assembly
 	{
 		for(auto&[reg,descr] : registers)
 		{
-			descr.content = decltype(descr.content){std::monostate{}};
+			descr.content.clear();
 		}
+	}
+
+	RegisterDescriptor* RegisterStateMachine::getEmptyRegister()
+	{
+		for(auto&[reg,descr] : registers)
+		{
+			if (descr.content.size() == 0)
+				return &descr;
+		}
+		return nullptr;
 	}
 
 	const std::map<Register, std::string_view> registerToStr
@@ -47,4 +57,20 @@ namespace assembly
 	{
 		return os << registerToStr.at(reg);
 	}
+
+	std::ostream& operator<<(std::ostream& os, const RegisterStateMachine& regm)
+	{
+		for (auto& [reg, descr] : regm.registers)
+		{
+			os << reg << '(';
+
+			for (auto varPtr : descr.content)
+			{
+				os << varPtr->name << ", ";
+			}
+			os << "), ";
+		}
+		return os;
+	}
+
 }

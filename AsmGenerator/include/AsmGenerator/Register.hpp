@@ -33,14 +33,19 @@ namespace assembly
 	{
 		// float int register etc. ....
 		Register reg;
-		std::variant<std::monostate, intermediate_rep::SymbolTable::Variable*> content;
+		std::vector<intermediate_rep::SymbolTable::Variable*> content;
 	};
 
 	struct RegisterStateMachine 
 	{
 		RegisterStateMachine();
 		std::map<Register, RegisterDescriptor> registers;
+		RegisterDescriptor* getEmptyRegister();
 		void clear();
 	};
+
+	std::ostream& operator<<(std::ostream& os, Register reg);
+
+	std::ostream& operator<<(std::ostream& os, const RegisterStateMachine& regm);
 
 }

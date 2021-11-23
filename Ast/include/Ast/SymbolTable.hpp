@@ -9,11 +9,10 @@
 #include <concepts>
 #include <stdexcept>
 #include <stack>
-#include <optional>
 
 namespace assembly
 {
-	enum class Register;
+	struct RegisterDescriptor;
 }
 
 namespace intermediate_rep
@@ -47,14 +46,21 @@ namespace intermediate_rep
 				Bool	// 1 Byte
 			} type;
 
-			int basePointerOffset = 0;
-
 			// -1 means no next use
+			
+			
 			int nextUse = -1;
 
 			bool live = false;
 
-			std::optional<assembly::Register> reg;
+
+			struct Memory
+			{};
+
+			int basePointerOffset = 0;
+
+			// indicates where the most recent version of the variable lies
+			std::vector<std::variant<assembly::RegisterDescriptor*, Memory>> variableDescriptor;
 		};
 
 		struct Function
@@ -102,6 +108,31 @@ namespace intermediate_rep
 
 		RecursiveSymTableIterator begin();
 		RecursiveSymTableIterator end();
+
+		auto non_rec_view()
+		{
+			class SymTableView
+			{
+			public:
+				SymTableView(SymbolTable& sym_table):
+					sym_table{ sym_table }
+				{}
+
+				auto begin()
+				{
+					return sym_table.table.begin();
+				}
+
+				auto end()
+				{
+					return sym_table.table.end();
+				}
+
+			private:
+				SymbolTable& sym_table;
+			};
+			return SymTableView{*this};
+		}
 
 	private:
 		std::map<std::string, Symbol> table;

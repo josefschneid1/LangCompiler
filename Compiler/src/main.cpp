@@ -18,10 +18,10 @@ int main()
 	
 	int main()
 	{
-		int a = 3;
+		int a = 3 + 3;
 		int b = 5 + a;
-		int c = b + a;
-		return 0;
+		int c = 3 * b;
+		return a;
 	}
 )";
 
@@ -69,6 +69,9 @@ int main()
 
 	printLiveNessRanges(std::cout, basicBlocks[0], live);
 
+	std::cout << "Assembly Code\n";
+
+	assemblyGen.gen();
 
 
 
