@@ -114,14 +114,14 @@ namespace tac_gen
 				if(stmt.falseStmt)
 				{
 					auto falseStmtLabel = labelGen.getUniqueLabel();
-					tac.push_back(tac::Quadruple{"",tac::InstructionType::IfFalseJump, address, falseStmtLabel});
+					tac.push_back(tac::Quadruple{"",tac::InstructionType::IfFalseJump, falseStmtLabel, address});
 					stmt.trueStmt->accept(*this, "");
 					tac.push_back(tac::Quadruple{"",tac::InstructionType::Jump, afterLabel});
 					stmt.falseStmt->accept(*this, falseStmtLabel);
 				}
 				else
 				{
-					tac.push_back(tac::Quadruple{"", tac::InstructionType::IfFalseJump, address, afterLabel});
+					tac.push_back(tac::Quadruple{"", tac::InstructionType::IfFalseJump, afterLabel, address});
 					stmt.trueStmt->accept(*this, "");
 				}
 				return afterLabel;
@@ -129,10 +129,13 @@ namespace tac_gen
 
 			std::string visit(ast::WhileStmt& stmt, std::string label)
 			{	
-				label = label != "" ? label : labelGen.getUniqueLabel();
+				if (label.empty())
+				{
+					label = labelGen.getUniqueLabel();
+				}
 				auto afterLabel = labelGen.getUniqueLabel();
-				stmt.condition->accept(*this, label);
-				tac.push_back(tac::Quadruple{"", tac::InstructionType::IfFalseJump, address, afterLabel});
+				label = stmt.condition->accept(*this, label);
+				tac.push_back(tac::Quadruple{label, tac::InstructionType::IfFalseJump, afterLabel, address});
 				stmt.stmt->accept(*this,"");
 				tac.push_back(tac::Quadruple{"", tac::InstructionType::Jump, label});
 				return afterLabel;

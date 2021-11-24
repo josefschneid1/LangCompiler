@@ -71,7 +71,6 @@ namespace intermediate_rep::tac
 		explicit Constant(T value):
 			value{value}
 		{}
-
 	};
 
 	struct CallArgNum
@@ -81,7 +80,6 @@ namespace intermediate_rep::tac
 			size{size}
 		{}
 	};
-
 
 	using Label = std::string;
 

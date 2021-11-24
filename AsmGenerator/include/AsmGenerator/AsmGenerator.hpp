@@ -36,7 +36,7 @@ namespace assembly
 		friend class AssignVisitor;
 		friend class ParamVisitor;
 		friend class ComparisonVisitor;
-
+		friend class IfFalseJumpVisitor;
 	private:
 
 		assembly::RegisterDescriptor* load(intermediate_rep::SymbolTable::Variable*);

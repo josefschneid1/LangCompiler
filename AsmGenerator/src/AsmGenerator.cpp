@@ -25,7 +25,7 @@ namespace assembly
 		{8, "QWORD"}
 	};
 
-	std::string_view sub_register(assembly::Register reg, int size)
+	std::string sub_register(assembly::Register reg, int size)
 	{
 		std::stringstream ss;
 		ss << reg;
@@ -177,7 +177,16 @@ namespace assembly
 			// Variable now inside register and memory
 			var->variableDescriptor.push_back(descrPtr);
 
-			os << "mov " << descrPtr->reg << ", [rbp + " << var->basePointerOffset << "]\n";
+			if (sizeOf.at(var->type) < 8)
+			{
+				os << "movsx ";
+			}
+			else
+			{
+				os << "mov ";
+			}
+
+			os << sub_register(descrPtr->reg, sizeOf.at(var->type)) << ", [rbp + " << var->basePointerOffset << "]\n";
 
 			return descrPtr;
 		}
@@ -224,7 +233,7 @@ namespace assembly
 			computeLocalOffset(var);
 		}
 
-		os << "mov [RBP + " << var->basePointerOffset << "], " << descr->reg << '\n';
+		os << "mov [RBP + " << var->basePointerOffset << "], " << sub_register(descr->reg,sizeOf.at(var->type))<< '\n';
 
 		// most recent version is now also in memory, but also in the register
 		var->variableDescriptor.push_back(intermediate_rep::SymbolTable::Variable::Memory{});
@@ -329,31 +338,62 @@ namespace assembly
 			gen.overwriteWithResult(result, descrArg1);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, intermediate_rep::SymbolTable::Variable*& arg1, tac::Constant<int>& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, intermediate_rep::SymbolTable::Variable*& arg1, tac::Constant<T>& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descrArg1 = gen.load(arg1);
 			gen.copyOrDrop(arg1, arg1_usage);
-			gen.os << opcode <<" " << descrArg1->reg << ", " << arg2.value << '\n';
+			if constexpr (std::same_as<T,bool>)
+			{
+				gen.os << opcode << " " << descrArg1->reg << ", " << static_cast<int>(arg2.value) << '\n';
+			}
+			else
+			{
+				gen.os << opcode << " " << descrArg1->reg << ", " << arg2.value << '\n';
+			}
 			gen.overwriteWithResult(result, descrArg1);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<int>& arg1, intermediate_rep::SymbolTable::Variable*& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<T>& arg1, intermediate_rep::SymbolTable::Variable*& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descrArg2 = gen.load(arg2);
 			auto descrArg1 = gen.registerState.getEmptyRegister();
-			gen.os << "mov " << descrArg1->reg << ", " << arg1.value << '\n';
+
+
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov " << descrArg1->reg << ", " << static_cast<int>(arg1.value) << '\n';
+			}
+			else
+			{
+				gen.os << "mov " << descrArg1->reg << ", " << arg1.value << '\n';
+			}
+
 			gen.os << opcode << " " << descrArg1->reg << ", " << descrArg2->reg << '\n';
 			gen.overwriteWithResult(result, descrArg1);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<int>& arg1, tac::Constant<int>& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<T>& arg1, tac::Constant<T>& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descr = gen.registerState.getEmptyRegister();
-			gen.os << "mov " << descr->reg << ", " << arg1.value << '\n';
-			gen.os << opcode <<" " << descr->reg << ", " << arg2.value << '\n';
+
+
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov " << descr->reg << ", " << static_cast<int>(arg1.value) << '\n';
+				gen.os << opcode << " " << descr->reg << ", " << static_cast<int>(arg2.value) << '\n';
+			}
+			else
+			{
+				gen.os << "mov " << descr->reg << ", " << arg1.value << '\n';
+				gen.os << opcode << " " << descr->reg << ", " << arg2.value << '\n';
+			}
+
 			gen.overwriteWithResult(result, descr);
 		}
 
@@ -380,38 +420,69 @@ namespace assembly
 			auto descrArg1 = gen.load(arg1);
 			auto descrArg2 = gen.load(arg2);
 			auto descr = gen.registerState.getEmptyRegister();
-			gen.os << "test " << descrArg1->reg << ", " << descrArg2->reg << '\n';
+			gen.os << "cmp " << descrArg1->reg << ", " << descrArg2->reg << '\n';
 			gen.os << opcode << " " << descr->reg << '\n';
 			gen.overwriteWithResult(result, descr);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, intermediate_rep::SymbolTable::Variable*& arg1, tac::Constant<int>& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, intermediate_rep::SymbolTable::Variable*& arg1, tac::Constant<T>& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descrArg1 = gen.load(arg1);
 			auto descr = gen.registerState.getEmptyRegister();
-			gen.os << "test " << descrArg1->reg << ", " << arg2.value << '\n';
+
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "cmp " << descrArg1->reg << ", " << static_cast<int>(arg2.value) << '\n';
+			}
+			else
+			{
+				gen.os << "cmp " << descrArg1->reg << ", " << arg2.value << '\n';
+			}
+
 			gen.os << opcode << " " << descr->reg << '\n';
 			gen.overwriteWithResult(result, descr);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<int>& arg1, intermediate_rep::SymbolTable::Variable*& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<T>& arg1, intermediate_rep::SymbolTable::Variable*& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descrArg2 = gen.load(arg2);
 			auto descrArg1 = gen.registerState.getEmptyRegister();
-			gen.os << "mov " << descrArg1->reg << ", " << arg1.value << '\n';
-			gen.os << "test " << descrArg1->reg << ", " << descrArg2->reg << '\n';
+		 	
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov " << descrArg1->reg << ", " << static_cast<int>(arg1.value) << '\n';
+
+			}
+			else
+			{
+				gen.os << "mov " << descrArg1->reg << ", " << arg1.value << '\n';
+			}
+
+			gen.os << "cmp " << descrArg1->reg << ", " << descrArg2->reg << '\n';
 			gen.os << opcode << " " << descrArg1->reg << '\n';
 			gen.overwriteWithResult(result, descrArg1);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<int>& arg1, tac::Constant<int>& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<T>& arg1, tac::Constant<T>& arg2)
 		{
 			auto& [result_usage, arg1_usage, arg2_usage] = info;
 			auto descr = gen.registerState.getEmptyRegister();
-			gen.os << "mov "  << descr->reg << ", " << arg1.value << '\n';
-			gen.os << "test " << descr->reg << ", " << arg2.value << '\n';
+
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov " << descr->reg << ", " << static_cast<int>(arg1.value) << '\n';
+				gen.os << "cmp " << descr->reg << ", " << static_cast<int>(arg2.value) << '\n';
+			}
+			else
+			{
+				gen.os << "mov " << descr->reg << ", " << arg1.value << '\n';
+				gen.os << "cmp " << descr->reg << ", " << arg2.value << '\n';
+			}
 
 			gen.os << opcode << " " << descr->reg << '\n';
 			gen.overwriteWithResult(result, descr);
@@ -426,7 +497,6 @@ namespace assembly
 		std::tuple<LiveUseInfo, LiveUseInfo, LiveUseInfo>& info;
 		std::string opcode;
 	};
-
 
 	struct ReturnVisitor
 	{
@@ -443,9 +513,19 @@ namespace assembly
 			gen.os << "ret\n";
 		}
 
-		auto operator()(tac::Constant<int>& arg1)
+		template<typename T>
+		auto operator()(tac::Constant<T>& arg1)
 		{
-			gen.os << "mov RAX, " << arg1.value << "\nret\n";
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov RAX, " << static_cast<int>(arg1.value) << '\n';
+
+			}
+			else
+			{
+				gen.os << "mov RAX, " << arg1.value << '\n';
+			}
+			gen.os << "ret\n";
 		}
 
 		auto operator()(std::monostate& arg1)
@@ -471,12 +551,20 @@ namespace assembly
 		auto operator()(intermediate_rep::SymbolTable::Variable*& arg1)
 		{
 			auto descr = gen.load(arg1);
-			gen.os << "push " << descr->reg << '\n';
+			gen.os << "push " << sub_register(descr->reg, sizeOf.at(arg1->type)) << '\n';
 		}
 
-		auto operator()(tac::Constant<int>& arg1)
+		template<typename T>
+		auto operator()(tac::Constant<T>& arg1)
 		{
-			gen.os << "push " << arg1.value << '\n';
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "push " << static_cast<int>(arg1.value) << '\n';
+			}
+			else
+			{
+				gen.os << "push " << arg1.value << '\n';
+			}	
 		}
 
 		auto operator()(auto&)
@@ -502,13 +590,22 @@ namespace assembly
 			result->variableDescriptor.emplace_back(descrArg2);
 		}
 
-		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<int>& arg2)
+		template<typename T>
+		auto operator()(intermediate_rep::SymbolTable::Variable*& result, tac::Constant<T>& arg2)
 		{
 			auto descr = gen.registerState.getEmptyRegister();
 			descr->content.push_back(result);
 			result->variableDescriptor.clear();
 			result->variableDescriptor.emplace_back(descr);
-			gen.os << "mov " << descr->reg << ", " << arg2.value << '\n';
+
+			if constexpr (std::same_as<T, bool>)
+			{
+				gen.os << "mov " << descr->reg << ", " << static_cast<int>(arg2.value) << '\n';
+			}
+			else
+			{
+				gen.os << "mov " << descr->reg << ", " << arg2.value << '\n';
+			}
 		}
 
 		auto operator()(auto&, auto&)
@@ -519,12 +616,45 @@ namespace assembly
 		AsmGenerator& gen;
 	};
 
+	struct IfFalseJumpVisitor
+	{
+
+		IfFalseJumpVisitor(AsmGenerator& gen) :
+			gen{ gen }
+		{}
+
+		auto operator()(std::string& label, intermediate_rep::SymbolTable::Variable*& arg1)
+		{
+			auto descr = gen.load(arg1);
+			gen.os << "cmp " << descr->reg << ", 0\n";
+			gen.os << "jz " << label << '\n';
+		}
+
+		auto operator()(std::string& label, tac::Constant<bool>& arg1)
+		{
+			if (!arg1.value)
+			{
+				gen.os << "jmp " << label << '\n';
+			}
+		}
+
+		auto operator()(auto&, auto&)
+		{
+			throw std::runtime_error("Unsupported Operands");
+		}
+
+		AsmGenerator& gen;
+	};
+	
 
 	void AsmGenerator::allocateRegisters(tac::Quadruple& quad, std::tuple<LiveUseInfo, LiveUseInfo, LiveUseInfo>& info)
 	{
 		using enum tac::InstructionType;
 
 		//std::cout << registerState << '\n';
+
+		if(quad.label.size() > 0)
+			os << quad.label << ": ";
 
 		switch (quad.instr)
 		{
@@ -561,11 +691,15 @@ namespace assembly
 			std::visit(ComparisonVisitor{ "setne", *this, info }, quad.result, quad.arg1, quad.arg2);
 			break;
 		case IfJump:
-			break;
+			throw std::runtime_error("Not implemented\n");
 		case IfFalseJump:
+			std::visit(IfFalseJumpVisitor{ *this }, quad.result, quad.arg1);
 			break;
 		case Jump:
+		{
+			os << "jmp " << std::get<std::string>(quad.result) << '\n';
 			break;
+		}
 		case Not:
 			break;
 		case Negate:
@@ -590,8 +724,10 @@ namespace assembly
 			std::visit(ReturnVisitor{ *this }, quad.arg1);
 			break;
 		case And:
+			std::visit(ArithmeticVisitor{ "and",  *this, info }, quad.result, quad.arg1, quad.arg2);
 			break;
 		case Or:
+			std::visit(ArithmeticVisitor{ "or",  *this, info }, quad.result, quad.arg1, quad.arg2);
 			break;
 		default:
 			throw std::runtime_error("Unsupported Three Address Code Operation");

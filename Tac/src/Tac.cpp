@@ -62,7 +62,6 @@ namespace intermediate_rep::tac
 		{
 			return std::to_string(num.size);
 		}
-
 	};
 
 	std::ostream& operator<<(std::ostream& os, const Quadruple& quad)

@@ -16,12 +16,17 @@ int main()
 {
 	std::string program = R"(
 	
-	int main()
+	bool main()
 	{
-		int a = 3 + 3;
-		int b = 5 + a;
-		int c = 3 * b;
-		return a;
+		if(5 < 3 and true)
+		{
+			int a = 5;
+		}
+		else
+		{
+			int b = 3;
+		}
+		return true;
 	}
 )";
 
